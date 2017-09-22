@@ -13,6 +13,9 @@ uint8_t posTilt;
 
 
 void setup() {
+  #ifdef DEBUG
+  Serial.begin(115200);
+  #endif
   
   digitalWrite(A0, INPUT_PULLUP);
   digitalWrite(A1, INPUT_PULLUP);
@@ -24,8 +27,12 @@ void setup() {
 }
 
 void loop() {
-
   readSensors(&values);                         //Leemos los sensores y guardamos los valores en values
+  
+  #ifdef DEBUG
+  serialplot(&values);                         //Si esta definido el debug, se imprime de manera que se plotee en el IDE Arduino
+  #endif
+  
   trackingMove(&values, direcciones);           //Con los valores de value decidimos que movimiento hay que hacer, y lo guardamos en direcciones
   settingMove(direcciones, &posPan, &posTilt ); //De acuerdo con la direccion que halla que tomar, se aumenta o reduce en los angulos de tilt&pan
   
@@ -42,7 +49,6 @@ void goHome(uint8_t *posPanP, uint8_t *posTiltP) {
 }
 
 void readSensors(values_u * recivedValues) {
-
   recivedValues->LDR1 = map(analogRead(A0), 0, 1023, 0, 255);
   recivedValues->LDR2 = map(analogRead(A1), 0, 1023, 0, 255);
   recivedValues->LDR3 = map(analogRead(A2), 0, 1023, 0, 255);
@@ -103,3 +109,19 @@ void settingMove( direction_u *recivedDirections, uint8_t *posPanP, uint8_t *pos
       break;
   }
 }
+
+void serialplot ( values_u * valuesP){
+  Serial.print(valuesP->LDR1);
+  Serial.print(" ");
+  
+  Serial.print(valuesP->LDR2);
+  Serial.print(" ");
+  
+  Serial.print(valuesP->LDR3);
+  Serial.print(" ");
+  
+  Serial.print(valuesP->LDR4);
+  Serial.println(" ");
+  
+}
+

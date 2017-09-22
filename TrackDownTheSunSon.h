@@ -1,6 +1,9 @@
 #ifndef __TRACKDWONTHESUNSON_H
 #define __TRACKDWONTHESUNSON_H
 
+//Definicion para activar el debug
+#define DEBUG
+
 //Definitions:
 #define ServoPanPin 10
 #define ServoTiltPin 9
@@ -48,6 +51,7 @@ void goHome(uint8_t *, uint8_t *);
 void readSensors(values_u *);
 void trackingMove( values_u *, direction_u * );
 void settingMove( direction_u *, uint8_t *, uint8_t *); 
+void serialplot ( values_u *);
 
 
 #endif
