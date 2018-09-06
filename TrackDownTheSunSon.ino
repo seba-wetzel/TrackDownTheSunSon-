@@ -7,16 +7,17 @@ Servo ServoTilt;
 
 //Variables
 values_u values;
+values_u values_prom;
 direction_u direcciones [2];
 uint8_t posPan;
 uint8_t posTilt;
 
 
 void setup() {
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial.begin(115200);
-  #endif
-  
+#endif
+
   digitalWrite(A0, INPUT_PULLUP);
   digitalWrite(A1, INPUT_PULLUP);
   digitalWrite(A2, INPUT_PULLUP);
@@ -27,15 +28,33 @@ void setup() {
 }
 
 void loop() {
-  readSensors(&values);                         //Leemos los sensores y guardamos los valores en values
-  
-  #ifdef DEBUG
+  // Esta version tiene un loop para promediar n lecturas de los LDR's
+  for (uint8_t i; i <= (factor_de_correccion - 1); i++) {
+    readSensors(&values);                         //Leemos los sensores y guardamos los valores en values
+    values_prom.LDR1 += values.LDR1;
+    values_prom.LDR2 += values.LDR2;
+    values_prom.LDR3 += values.LDR3;
+    values_prom.LDR4 += values.LDR4;
+    delay(10);
+  }
+  values.LDR1 = values_prom.LDR1 / factor_de_correccion;
+  values.LDR2 = values_prom.LDR2 / factor_de_correccion;
+  values.LDR3 = values_prom.LDR3 / factor_de_correccion;
+  values.LDR4 = values_prom.LDR4 / factor_de_correccion;
+
+  values_prom.LDR1 = 0;
+  values_prom.LDR2 = 0;
+  values_prom.LDR3 = 0;
+  values_prom.LDR4 = 0;
+
+
+#ifdef DEBUG
   serialplot(&values);                         //Si esta definido el debug, se imprime de manera que se plotee en el IDE Arduino
-  #endif
-  
+#endif
+
   trackingMove(&values, direcciones);           //Con los valores de value decidimos que movimiento hay que hacer, y lo guardamos en direcciones
   settingMove(direcciones, &posPan, &posTilt ); //De acuerdo con la direccion que halla que tomar, se aumenta o reduce en los angulos de tilt&pan
-  
+
   ServoPan.write(posPan);                       //Escribimios los angulos de tilt&pan en los servos
   ServoTilt.write(posTilt);
   delay(10);
@@ -110,18 +129,18 @@ void settingMove( direction_u *recivedDirections, uint8_t *posPanP, uint8_t *pos
   }
 }
 
-void serialplot ( values_u * valuesP){
-  Serial.print(valuesP->LDR1);
+void serialplot ( values_u * valuesP) {
+  Serial.print(valuesP->LDR1+100);
   Serial.print(" ");
-  
-  Serial.print(valuesP->LDR2);
+
+  Serial.print(valuesP->LDR2+50);
   Serial.print(" ");
-  
-  Serial.print(valuesP->LDR3);
+
+  Serial.print(valuesP->LDR3-50);
   Serial.print(" ");
-  
-  Serial.print(valuesP->LDR4);
+
+  Serial.print(valuesP->LDR4-100);
   Serial.println(" ");
-  
+
 }
 

@@ -18,6 +18,7 @@
 #endif
 
 #define Hysteresis 20
+#define factor_de_correccion 32
 #define MaxAngular 180
 #define MinAngular 0
 typedef enum {
