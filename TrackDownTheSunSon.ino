@@ -6,10 +6,15 @@ Servo ServoPan;
 Servo ServoTilt;
 
 //Variables
-values_u values;
-values_u values_prom;
-direction_u direcciones [2];
-uint8_t posPan;
+values_u values;      //Estructura del tipo values_u donde se va a guardar
+                      //los valores finales leidos de los ldr
+
+values_u values_prom; //Estructura temporal tipo buffer para promediar
+
+direction_u direcciones [2]; //Array de dos posiciones del tipo direction_u
+                             //donde se guardan para que lado tiene que moverse
+                             //cada servo
+uint8_t posPan;   //Donde se guarda "el angulo" que se tiene que mover el servo
 uint8_t posTilt;
 
 
@@ -24,19 +29,24 @@ void setup() {
   digitalWrite(A3, INPUT_PULLUP);
   ServoPan.attach(ServoPanPin);
   ServoTilt.attach(ServoTiltPin);
-  goHome(&posPan, &posTilt);
-}
+  goHome(&posPan, &posTilt); //Se pasan punteros a las variable del angulo
+}                            //donde tiene el home cada servo
 
 void loop() {
   // Esta version tiene un loop para promediar n lecturas de los LDR's
   for (uint8_t i; i <= (factor_de_correccion - 1); i++) {
-    readSensors(&values);                         //Leemos los sensores y guardamos los valores en values
+    readSensors(&values); //Leemos los sensores y guardamos los valores en
+                          //values que sirve de buffer
+    //Vamos sumando el valor leido en el bucle y lo guardamos en values_prom
+    //para despues dividirlo y tener el promedio
     values_prom.LDR1 += values.LDR1;
     values_prom.LDR2 += values.LDR2;
     values_prom.LDR3 += values.LDR3;
     values_prom.LDR4 += values.LDR4;
-    delay(10);
-  }
+    delay(10); //Si incrementamos este delay las lecturas se hacen mas pausadas
+  }            //pudiendo dar mas estabilidad a las lecturas
+
+  //Dividimos y guardamos en en values el valor ya promediado
   values.LDR1 = values_prom.LDR1 / factor_de_correccion;
   values.LDR2 = values_prom.LDR2 / factor_de_correccion;
   values.LDR3 = values_prom.LDR3 / factor_de_correccion;
@@ -67,12 +77,20 @@ void goHome(uint8_t *posPanP, uint8_t *posTiltP) {
 
 }
 
+//Esta funcion recibe un estructura donde guardar los valor mapeados
+//del LDR con el valor que puede generar el PWM para manejar los servos
 void readSensors(values_u * recivedValues) {
   recivedValues->LDR1 = map(analogRead(A0), 0, 1023, 0, 255);
   recivedValues->LDR2 = map(analogRead(A1), 0, 1023, 0, 255);
   recivedValues->LDR3 = map(analogRead(A2), 0, 1023, 0, 255);
   recivedValues->LDR4 = map(analogRead(A3), 0, 1023, 0, 255);
 }
+
+
+//Esta funcion recibe dos estructuras, una donde estan guardadas las lecturas
+//de los LDR, y otra donde se guardan las direccin a la que debe moverse cada
+//servo, segundo compara que LDR esta mas iluminado. Esta funcion solo dice
+//para que lado moverse, pero no cuanto se tiene que mover.
 
 void trackingMove (values_u *recivedValues, direction_u *storage) {
 
@@ -99,6 +117,11 @@ void trackingMove (values_u *recivedValues, direction_u *storage) {
   }
 }
 
+
+//Esta funcion es la que se encarga de decir cuanto se tiene que mover cada
+//servo, al incrementar o decrementar las variables que recibe por puntero
+//posPanP y posTiltP. Pero no controla el servo, de eso se encarga el
+//metodo write de cada objeto servo cuando se le pasan estas variable
 void settingMove( direction_u *recivedDirections, uint8_t *posPanP, uint8_t *posTiltP) {
 
   //Pan move
@@ -143,4 +166,3 @@ void serialplot ( values_u * valuesP) {
   Serial.println(" ");
 
 }
-
